@@ -151,7 +151,7 @@ $transactions = $pdo->query('SELECT id, type, amount, description, date FROM tra
             <?php endif; ?>
         </form>
 
-        <div class="footer-note">Note: Data automatically <b>ledger.db</b> (SQLite) me store hota hai.</div>
+        <div class="footer-note">Note: Data MySQL database <b>paisa_ledger</b> me store hota hai.</div>
     </div>
 
     <div class="card" style="padding:0; overflow:hidden;">
