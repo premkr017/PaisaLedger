@@ -3,15 +3,25 @@ require_once __DIR__ . DIRECTORY_SEPARATOR . 'db.php';
 
 $pdo = getDb();
 
-$transactions = $pdo->query('SELECT id, type, amount, description, date FROM transactions ORDER BY date DESC, id DESC')
-                    ->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $transactions = $pdo->query('SELECT id, type, amount, description, date FROM transactions ORDER BY date DESC, id DESC')
+                        ->fetchAll(PDO::FETCH_ASSOC);
 
-$incomeTotal = (float)$pdo->query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'")
-                         ->fetchColumn();
-$expenseTotal = (float)$pdo->query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'")
-                          ->fetchColumn();
-$balance = $incomeTotal - $expenseTotal;
+    $incomeTotal = (float)$pdo->query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'")
+                             ->fetchColumn();
+    $expenseTotal = (float)$pdo->query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'")
+                              ->fetchColumn();
+    $balance = $incomeTotal - $expenseTotal;
+} catch (Throwable $e) {
+    $transactions = [];
+    $incomeTotal = 0.0;
+    $expenseTotal = 0.0;
+    $balance = 0.0;
+    // Debug: show error on page
+    $pageError = $e->getMessage();
+}
 ?>
+
 
 <!doctype html>
 <html lang="en">
@@ -51,6 +61,11 @@ $balance = $incomeTotal - $expenseTotal;
         <a href="index.php">Add Transaction</a>
         <a href="transactions.php">View Transactions</a>
     </div>
+
+    <?php if (isset($pageError) && $pageError): ?>
+        <div class="err" style="margin-bottom:16px;">DB Select Error: <?php echo htmlspecialchars($pageError); ?></div>
+    <?php endif; ?>
+
 
     <div class="summary">
         <div class="card">

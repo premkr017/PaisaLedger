@@ -39,24 +39,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
     // Agar errors nahi hain, to insert query run hoti hai.
     if (!$errors) {
-        // Ye SQL query prepared statement ke saath naya transaction record insert karti hai.
-        $stmt = $pdo->prepare(
-            'INSERT INTO transactions (type, amount, description, date) VALUES (:type, :amount, :description, :date)'
-        );
+        try {
+            // Ye SQL query prepared statement ke saath naya transaction record insert karti hai.
+            $stmt = $pdo->prepare(
+                'INSERT INTO transactions (type, amount, description, date) VALUES (:type, :amount, :description, :date)'
+            );
 
-        $stmt->execute([
-            ':type' => $formType,
-            ':amount' => $amountNum,
-            ':description' => $formDescription,
-            ':date' => $today,
-        ]);
+            $stmt->execute([
+                ':type' => $formType,
+                ':amount' => $amountNum,
+                ':description' => $formDescription !== '' ? $formDescription : null,
+                ':date' => $today,
+            ]);
 
-        $message = 'Transaction successfully add ho gaya.';
+            $message = 'Transaction successfully add ho gaya.';
 
-        // Insert ke baad form clear kar dete hain.
-        $formAmount = '';
-        $formDescription = '';
-        $formType = $formType;
+            // Insert ke baad form clear kar dete hain.
+            $formAmount = '';
+            $formDescription = '';
+            $formType = 'income';
+        } catch (Throwable $e) {
+            $errors[] = 'Insert DB error: ' . $e->getMessage();
+            $message = 'Please sahi details fill karein.';
+        }
     } else {
         // Agar validation fail hui, to message me errors show karte hain.
         $message = 'Please sahi details fill karein.';
@@ -64,8 +69,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 }
 
 // Ye transactions ko database se fetch karta hai taaki HTML table me display ho sake.
-$transactions = $pdo->query('SELECT id, type, amount, description, date FROM transactions ORDER BY date DESC, id DESC')
-                    ->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $transactions = $pdo->query('SELECT id, type, amount, description, date FROM transactions ORDER BY date DESC, id DESC')
+                        ->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $transactions = [];
+    $errors[] = 'Select DB error: ' . $e->getMessage();
+    $message = 'Database se transactions load nahi ho paayi.';
+}
+
 
 ?>
 
